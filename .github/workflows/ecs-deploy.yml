@@ -25,29 +25,31 @@ permissions:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}   # ✅ IMPORTANT
 
     steps:
-    - uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-    - name: Configure AWS (OIDC)
-      uses: aws-actions/configure-aws-credentials@v2
-      with:
-        role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
-        aws-region: ${{ secrets.AWS_REGION }}
+      - name: Configure AWS (OIDC)
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ secrets.AWS_REGION }}
 
-    - name: Login to ECR
-      id: login-ecr
-      uses: aws-actions/amazon-ecr-login@v2
+      - name: Login to ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
 
-    - name: Build & Push
-      run: |
-        docker build -t flask-ecs-app .
-        docker tag flask-ecs-app:latest ${{ steps.login-ecr.outputs.registry }}/flask-ecs-app:latest
-        docker push ${{ steps.login-ecr.outputs.registry }}/flask-ecs-app:latest
+      - name: Build & Push Docker Image
+        run: |
+          docker build -t flask-ecs-app .
+          docker tag flask-ecs-app:latest ${{ steps.login-ecr.outputs.registry }}/flask-ecs-app:latest
+          docker push ${{ steps.login-ecr.outputs.registry }}/flask-ecs-app:latest
 
-    - name: Deploy ECS
-      run: |
-        aws ecs update-service \
-          --cluster ${{ inputs.cluster }} \
-          --service ${{ inputs.service }} \
-          --force-new-deployment
+      - name: Deploy to ECS
+        run: |
+          aws ecs update-service \
+            --cluster ${{ inputs.cluster }} \
+            --service ${{ inputs.service }} \
+            --force-new-deployment
