@@ -25,11 +25,19 @@ permissions:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    environment: ${{ inputs.environment }}   # ✅ IMPORTANT
+    environment: ${{ inputs.environment }}   
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
+
+      # print
+      - name: Print Environment Details
+        run: |
+          echo "===== ENV DETAILS ====="
+          echo "Environment: ${{ inputs.environment }}"
+          echo "App Name: ${{ vars.APP_NAME }}"
+          echo "App Version: ${{ vars.APP_VERSION }}"
 
       - name: Configure AWS (OIDC)
         uses: aws-actions/configure-aws-credentials@v2
